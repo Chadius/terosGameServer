@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/chadius/terosgamerules v0.0.0-20220114204417-1dca36259870
+	github.com/golang/protobuf v1.4.3
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.4.1
 	github.com/stretchr/testify v1.7.0
 	github.com/twitchtv/twirp v8.1.1+incompatible

@@ -3,8 +3,8 @@ package terosgameserver
 import (
 	"bytes"
 	"context"
-	terosgamerules "github.com/Chadius/terosGameRules"
-	"github.com/Chadius/terosGameServer/rpc/github.com/chadius/teros_game_server"
+	"github.com/chadius/terosgamerules"
+	"github.com/chadius/terosgameserver/rpc/github.com/chadius/teros_game_server"
 )
 
 // Server implements the RulesStrategy service
@@ -33,12 +33,12 @@ func (s *Server) GetGameRules() terosgamerules.RulesStrategy {
 // NewServer returns a new Server object with the given gameRules.
 //   Defaults to using the production GameRules if none is given.
 func NewServer(gameRules terosgamerules.RulesStrategy) *Server {
-	//var transformerToUse creatingsymmetry.TransformerStrategy
-	//transformerToUse = &creatingsymmetry.FileTransformer{}
-	//if transformer != nil {
-	//	transformerToUse = transformer
-	//}
+	var gameRulesToUse terosgamerules.RulesStrategy
+	gameRulesToUse = &terosgamerules.GameRules{}
+	if gameRules != nil {
+		gameRulesToUse = gameRules
+	}
 	return &Server{
-		gameRules: gameRules,
+		gameRules: gameRulesToUse,
 	}
 }
