@@ -1,10 +1,10 @@
-package terosGameServer_test
+package terosgameserver_test
 
 import (
 	"bytes"
-	"github.com/Chadius/terosGameServer/internal/terosgameserver"
 	"github.com/Chadius/terosGameServer/rulesstrategyfakes"
 	"github.com/chadius/terosGameServer/rpc/github.com/chadius/teros_game_server"
+	"github.com/chadius/terosGameServer/terosgameserver"
 	"github.com/chadius/terosgamerules"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/require"
