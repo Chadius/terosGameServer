@@ -2,9 +2,11 @@ package terosGameServer_test
 
 import (
 	"bytes"
-	"github.com/Chadius/terosGameServer/rpc/github.com/chadius/teros_game_server"
-	"github.com/chadius/terosGameServer/rulesstrategyfakes"
+	"github.com/Chadius/terosGameServer/internal/terosgameserver"
+	"github.com/Chadius/terosGameServer/rulesstrategyfakes"
+	"github.com/chadius/terosGameServer/rpc/github.com/chadius/teros_game_server"
 	"github.com/chadius/terosgamerules"
+	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"io"
@@ -19,12 +21,12 @@ func TestServerUsesPackageSuite(t *testing.T) {
 
 type ServerUsesPackageSuite struct {
 	suite.Suite
-	request                         *http.Request
-	responseRecorder                *httptest.ResponseRecorder
-	server         teros_game_server.TwirpServer
-	fakeGameRules *terosgamerules.RulesStrategy
-	scriptData                      []byte
-	squaddieData       []byte
+	request           *http.Request
+	responseRecorder  *httptest.ResponseRecorder
+	server            teros_game_server.TwirpServer
+	fakeGameRules     *terosgamerules.RulesStrategy
+	scriptData        []byte
+	squaddieData      []byte
 	powerData         []byte
 	gameRulesResponse []byte
 }
@@ -51,16 +53,16 @@ func (suite *ServerUsesPackageSuite) fakeGameRulesWithResponse(expectedResponse 
 	return &fakeTransformerStrategy
 }
 
-func (suite *ServerUsesPackageSuite) getServer() image_transform_server.TwirpServer {
-	server := transformserver.NewServer(suite.fakeGameRules)
-	twirpServer := image_transform_server.NewImageTransformerServer(server)
+func (suite *ServerUsesPackageSuite) getServer() teros_game_server.TwirpServer {
+	server := terosgameserver.NewServer(suite.fakeGameRules)
+	twirpServer := teros_game_server.NewTerosGameServerServer(server)
 	return twirpServer
 }
 
 func (suite *ServerUsesPackageSuite) generateProtobufRequest(requestBody *bytes.Buffer) *http.Request {
 	testRequest, newRequestErr := http.NewRequest(
 		http.MethodPost,
-		"/twirp/chadius.imageTransformServer.ImageTransformer/Transform",
+		"/twirp/chadius.terosGameServer.TerosGameServer/ReplayBattleScript",
 		requestBody,
 	)
 	require := require.New(suite.T())
@@ -70,10 +72,10 @@ func (suite *ServerUsesPackageSuite) generateProtobufRequest(requestBody *bytes.
 }
 
 func (suite *ServerUsesPackageSuite) getDataStream() *bytes.Buffer {
-	dataStream := &image_transform_server.DataStreams{
-		InputImage:     suite.scriptData,
-		FormulaData:    suite.squaddieData,
-		OutputSettings: suite.outputSettingsData,
+	dataStream := &teros_game_server.DataStreams{
+		ScriptData:   suite.scriptData,
+		SquaddieData: suite.squaddieData,
+		PowerData:    suite.powerData,
 	}
 
 	protobuf, protobufErr := proto.Marshal(dataStream)
@@ -85,13 +87,14 @@ func (suite *ServerUsesPackageSuite) getDataStream() *bytes.Buffer {
 	return requestBody
 }
 
-func (suite *ServerUsesPackageSuite) TestWhenClientMakesRequest_ResponseIsValid() {
-	// Act
-	suite.server.ServeHTTP(suite.responseRecorder, suite.request)
-
-	// Assert
-	response := suite.responseRecorder.Result()
-
-	require := require.New(suite.T())
-	require.Equal(200, response.StatusCode, "Status code is wrong")
-}
+//
+//func (suite *ServerUsesPackageSuite) TestWhenClientMakesRequest_ResponseIsValid() {
+//	// Act
+//	suite.server.ServeHTTP(suite.responseRecorder, suite.request)
+//
+//	// Assert
+//	response := suite.responseRecorder.Result()
+//
+//	require := require.New(suite.T())
+//	require.Equal(200, response.StatusCode, "Status code is wrong")
+//}
