@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package chadius.terosGameServer;
+option go_package = "github.com/chadius/teros_game_server";
+
+// TerosGameServer uses the TerosGameRules package to evaluate attacks.
+service TerosGameServer {
+  // Uses the Script, Squaddies and Power Data to evaluate combat.
+  rpc ReplayBattleScript(DataStreams) returns (Results);
+}
+
+// Raw data byte streams
+message DataStreams {
+  bytes scriptData = 1; // JSON or YAML format
+  bytes squaddieData = 2; // JSON or YAML format
+  bytes powerData = 3; // JSON or YAML format
+}
+
+// Raw text results
+message Results {
+  bytes textData = 1; // A multi-string readout of the results
+}
