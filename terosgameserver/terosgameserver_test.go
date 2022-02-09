@@ -2,6 +2,7 @@ package terosgameserver_test
 
 import (
 	"bytes"
+	"errors"
 	"github.com/chadius/terosgamerules"
 	"github.com/chadius/terosgameserver/rpc/github.com/chadius/teros_game_server"
 	"github.com/chadius/terosgameserver/rulesstrategyfakes"
@@ -47,12 +48,12 @@ func (suite *ServerUsesPackageSuite) SetupTest() {
 }
 
 func (suite *ServerUsesPackageSuite) fakeGameRulesWithResponse(expectedResponse []byte) *rulesstrategyfakes.FakeRulesStrategy {
-	fakeTransformerStrategy := rulesstrategyfakes.FakeRulesStrategy{}
-	fakeTransformerStrategy.ReplayBattleScriptStub = func(scriptFileHandle, squaddieFileHandle, powerFileHandle io.Reader, output io.Writer) error {
+	fakeGameRules := rulesstrategyfakes.FakeRulesStrategy{}
+	fakeGameRules.ReplayBattleScriptStub = func(scriptFileHandle, squaddieFileHandle, powerFileHandle io.Reader, output io.Writer) error {
 		output.Write(expectedResponse)
 		return nil
 	}
-	return &fakeTransformerStrategy
+	return &fakeGameRules
 }
 
 func (suite *ServerUsesPackageSuite) getServer() teros_game_server.TwirpServer {
@@ -145,6 +146,53 @@ func (suite *ServerUsesPackageSuite) requireResponseDataMatches(require *require
 	unmarshalErr := proto.Unmarshal(suite.responseRecorder.Body.Bytes(), output)
 	require.Nil(unmarshalErr, "Error while unmarshalling response body")
 	require.Equal(suite.gameRulesResponse, output.TextData, "output message received from mock object is different")
+}
+
+func (suite *ServerUsesPackageSuite) TestWhenPackageRaisesError_ThenServerReturns500() {
+	// Setup
+	fakeGameRules := rulesstrategyfakes.FakeRulesStrategy{}
+	fakeGameRules.ReplayBattleScriptStub = func(scriptFileHandle, squaddieFileHandle, powerFileHandle io.Reader, output io.Writer) error {
+		return errors.New("irrelevant error")
+	}
+	server := terosgameserver.NewServer(&fakeGameRules)
+	twirpServer := teros_game_server.NewTerosGameServerServer(server)
+	responseRecorder := httptest.NewRecorder()
+
+	// Act
+	twirpServer.ServeHTTP(responseRecorder, suite.request)
+
+	// Require
+	response := responseRecorder.Result()
+
+	require := require.New(suite.T())
+	require.Equal(500, response.StatusCode, "Status code is wrong")
+}
+
+func (suite *ServerUsesPackageSuite) TestWhenPackagePanics_ThenServerReturns500() {
+	// Setup
+	var nilObject terosgamerules.RulesStrategy
+	fakeGameRules := rulesstrategyfakes.FakeRulesStrategy{}
+	fakeGameRules.ReplayBattleScriptStub = func(dummyReader1, dummyReader2, dummyReader3 io.Reader, dummyWriter io.Writer) error {
+		nilObject.ReplayBattleScript(
+			dummyReader1,
+			dummyReader2,
+			dummyReader3,
+			dummyWriter,
+		)
+		return nil
+	}
+	server := terosgameserver.NewServer(&fakeGameRules)
+	twirpServer := teros_game_server.NewTerosGameServerServer(server)
+	responseRecorder := httptest.NewRecorder()
+
+	// Act
+	twirpServer.ServeHTTP(responseRecorder, suite.request)
+
+	// Require
+	response := responseRecorder.Result()
+
+	require := require.New(suite.T())
+	require.Equal(500, response.StatusCode, "Status code is wrong")
 }
 
 type InjectGameRulesSuite struct {

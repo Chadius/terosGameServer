@@ -3,6 +3,7 @@ package terosgameserver
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"github.com/chadius/terosgamerules"
 	"github.com/chadius/terosgameserver/rpc/github.com/chadius/teros_game_server"
 )
@@ -19,11 +20,24 @@ func (s *Server) ReplayBattleScript(cts context.Context, data *teros_game_server
 	squaddieDataByteStream := bytes.NewBuffer(data.GetSquaddieData())
 	powerDataByteStream := bytes.NewBuffer(data.GetPowerData())
 
+	return s.runScriptToCreateResults(scriptDataByteStream, squaddieDataByteStream, powerDataByteStream)
+}
+
+func (s *Server) runScriptToCreateResults(scriptDataByteStream *bytes.Buffer, squaddieDataByteStream *bytes.Buffer, powerDataByteStream *bytes.Buffer) (*teros_game_server.Results, error) {
+	var packagePanicErr error
+	defer func() {
+		if panicContext := recover(); panicContext != nil {
+			packagePanicErr = fmt.Errorf("package panic: %v", panicContext)
+		}
+	}()
 	var outputGameResults bytes.Buffer
 
-	transformErr := s.GetGameRules().ReplayBattleScript(scriptDataByteStream, squaddieDataByteStream, powerDataByteStream, &outputGameResults)
-	outputImage := &teros_game_server.Results{TextData: outputGameResults.Bytes()}
-	return outputImage, transformErr
+	replayErr := s.GetGameRules().ReplayBattleScript(scriptDataByteStream, squaddieDataByteStream, powerDataByteStream, &outputGameResults)
+	results := &teros_game_server.Results{TextData: outputGameResults.Bytes()}
+	if packagePanicErr != nil {
+		return results, packagePanicErr
+	}
+	return results, replayErr
 }
 
 func (s *Server) GetGameRules() terosgamerules.RulesStrategy {
