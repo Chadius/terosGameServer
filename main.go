@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/Chadius/terosGameServer/rpc/github.com/chadius/teros_game_server"
-	"github.com/Chadius/terosGameServer/terosgameserver"
+	"github.com/chadius/terosgameserver/rpc/github.com/chadius/teros_game_server"
+	"github.com/chadius/terosgameserver/terosgameserver"
 	"net/http"
 )
 
